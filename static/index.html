@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Fake News Detector</title>
+</head>
+<body style="font-family:sans-serif; max-width:900px; margin:40px auto;">
+
+  <h2>Fake News Detector</h2>
+
+  <p>Paste a news article (or part of it), then click Analyze.</p>
+
+  <textarea id="text" rows="12" style="width:100%; padding:10px;"
+    placeholder="Paste news text here..."></textarea>
+
+  <br><br>
+  <button onclick="analyze()" style="padding:10px 14px;">Analyze</button>
+
+  <h3>Result</h3>
+  <div id="result" style="padding:10px; border:1px solid #ddd;"></div>
+
+  <h3>Raw JSON</h3>
+  <pre id="raw" style="background:#f4f4f4; padding:10px; overflow:auto;"></pre>
+
+<script>
+async function analyze() {
+  const text = document.getElementById("text").value;
+
+  document.getElementById("result").innerText = "Analyzing...";
+  document.getElementById("raw").innerText = "";
+
+  try {
+    const res = await fetch("/predict", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ text })
+    });
+
+    const out = await res.json();
+
+    if (out.error) {
+      document.getElementById("result").innerHTML = "<b>Error:</b> " + out.error;
+      document.getElementById("raw").innerText = JSON.stringify(out, null, 2);
+      return;
+    }
+
+    document.getElementById("result").innerHTML =
+      "<b>Prediction:</b> " + out.label + "<br>" +
+      "<b>P(REAL):</b> " + out.prob_real.toFixed(4) + "<br>" +
+      "<b>P(FAKE):</b> " + out.prob_fake.toFixed(4) + "<br>";
+
+    document.getElementById("raw").innerText = JSON.stringify(out, null, 2);
+
+  } catch (e) {
+    document.getElementById("result").innerHTML = "<b>Error:</b> " + e;
+  }
+}
+</script>
+
+</body>
+</html>
