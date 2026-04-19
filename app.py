@@ -5,6 +5,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 import torch
@@ -19,13 +20,20 @@ ID2LABEL = {0: "REAL", 1: "FAKE"}
 
 app = FastAPI(title="Fake News Detector")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+)
 
 
-@app.get("/")
-def home():
-    return FileResponse("static/index.html")
+# app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# def home():
+    # return FileResponse("static/index.html")
 
 
 
@@ -34,6 +42,10 @@ tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR)
 model = AutoModelForSequenceClassification.from_pretrained(MODEL_DIR)
 model.to(DEVICE)
 model.eval()
+
+@app.get("/")
+def read_root():
+    return {"status": "AI Model is Online", "device": DEVICE }
 
 
 class TextIn(BaseModel):
